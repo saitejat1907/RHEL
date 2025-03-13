@@ -1,9 +1,13 @@
 pipeline {
     agent any
+
     stages {
-        stage('Run Ansible') {
+        stage("Ping All Hosts") {
             steps {
-                sh 'ansible all -m ping'
+                ansibleCommand credentialsId: 'Ansible',
+                               disableHostKeyChecking: true,
+                               inventory: 'dev.inv',
+                               command: 'all -m ping'
             }
         }
     }
