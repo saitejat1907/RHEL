@@ -1,0 +1,5 @@
+[g1]
+n1 ansible_host=172.24.8.188   ansible_user=matilda-svc
+n2 ansible_host=172.24.8.79   ansible_user=matilda-svc
+n3 ansible_host=172.24.7.84   ansible_user=matilda-svc
+n4 ansible_host=172.24.7.92   ansible_user=matilda-svc
