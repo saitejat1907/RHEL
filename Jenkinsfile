@@ -19,7 +19,7 @@ pipeline {
     stages {
         stage("github repo"){
             steps {
-                git 'https://github.com/saitejat1907/RHEL.git'  // Cloning your GitHub repo
+                git branch: 'main',url: 'https://github.com/saitejat1907/RHEL.git'  // Cloning your GitHub repo
             }
         }
         stage("Execute Ansible") {
