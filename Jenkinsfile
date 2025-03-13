@@ -4,7 +4,7 @@ pipeline {
     stages {
         stage("Ping All Hosts") {
             steps {
-                ansibleCommand credentialsId: 'Ansible',
+                ansibleAdhoc credentialsId: 'Ansible',
                                disableHostKeyChecking: true,
                                inventory: 'dev.inv',
                                command: 'all -m ping'
@@ -12,3 +12,4 @@ pipeline {
         }
     }
 }
+
