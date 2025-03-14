@@ -10,7 +10,6 @@
     create_domain_script: "/opt/app/create_domain.py"  # Path to the create_domain.py script
 
   tasks:
-
     # Create app group
     - name: Create app group
       group:
@@ -56,6 +55,13 @@
       stat:
         path: "{{ jdk_dest }}"
       register: jdk_stat
+
+    # Ensure /usr/java/ directory exists
+    - name: Ensure /usr/java/ directory exists
+      file:
+        path: /usr/java
+        state: directory
+        mode: '0755'
 
     # Extract Oracle JDK 8 if not already extracted
     - name: Extract Oracle JDK 8
@@ -173,12 +179,17 @@
       register: start_weblogic
       ignore_errors: yes
 
-    # Show WebLogic startup output (stdout)
+    # Show WebLogic installation output
+    - name: Show WebLogic installation output
+      debug:
+        msg: "{{ weblogic_install.stdout }}"
+
+    # Show domain creation output
+    - name: Show domain creation output
+      debug:
+        msg: "{{ create_domain.stdout }}"
+
+    # Show WebLogic start output
     - name: Show WebLogic start output
       debug:
         msg: "{{ start_weblogic.stdout }}"
-
-    # Show WebLogic startup error output (stderr)
-    - name: Show WebLogic start error output
-      debug:
-        msg: "{{ start_weblogic.stderr }}"
