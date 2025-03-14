@@ -127,36 +127,36 @@
     #     group: root
     #     mode: '0644'
 
-    # # Create create_domain.py script for WebLogic domain
-    # - name: Create create_domain.py script for WebLogic domain
-    #   copy:
-    #     content: |
-    #       #!/usr/bin/python
-    #       readTemplate("/opt/app/weblogic/wlserver/common/templates/wls/wls.jar")
+    # Create create_domain.py script for WebLogic domain
+    - name: Create create_domain.py script for WebLogic domain
+      copy:
+        content: |
+          #!/usr/bin/python
+          readTemplate("/opt/app/weblogic/wlserver/common/templates/wls/wls.jar")
           
-    #       cd('Servers/AdminServer')
-    #       set('ListenPort', 7001)
-    #       set('ListenAddress', '')
+          cd('Servers/AdminServer')
+          set('ListenPort', 7001)
+          set('ListenAddress', '')
           
-    #       cd('/')
-    #       cd('Security/base_domain/User/weblogic')
-    #       cmo.setName('weblogic')
-    #       cmo.setPassword('Web@1234')
+          cd('/')
+          cd('Security/base_domain/User/weblogic')
+          cmo.setName('weblogic')
+          cmo.setPassword('Web@1234')
           
-    #       # Set production mode and Java home
-    #       setOption('ServerStartMode', 'prod')
-    #       setOption('JavaHome', '/opt/java/jdk1.8.0_202')
-    #       setOption('OverwriteDomain', 'true')
+          # Set production mode and Java home
+          setOption('ServerStartMode', 'prod')
+          setOption('JavaHome', '/usr/java/jdk1.8.0_202')
+          setOption('OverwriteDomain', 'true')
           
-    #       # Write domain to the path
-    #       writeDomain('/opt/app/weblogic/user_projects/domains/mydomain')
-    #       closeTemplate()
+          # Write domain to the path
+          writeDomain('/opt/app/weblogic/user_projects/domains/mydomain')
+          closeTemplate()
           
-    #       exit()
-    #     dest: "{{ create_domain_script }}"
-    #     owner: app
-    #     group: appgroup
-    #     mode: '0755'
+          exit()
+        dest: "{{ create_domain_script }}"
+        owner: app
+        group: appgroup
+        mode: '0755'
 
     # # Run WebLogic installer
     # - name: Run WebLogic installer
