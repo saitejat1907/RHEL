@@ -1,0 +1,28 @@
+- name: Install and Start Apache HTTPD on RHEL 8
+  hosts: webservers
+  become: yes  # Run tasks as root
+  tasks:
+
+    - name: Install Apache HTTPD package
+      dnf:
+        name: httpd
+        state: present
+
+    - name: Start and enable HTTPD service
+      systemd:
+        name: httpd
+        state: started
+        enabled: yes
+
+    - name: Allow HTTP traffic in firewall
+      firewalld:
+        service: http
+        permanent: yes
+        state: enabled
+      notify: Reload firewalld
+
+  handlers:
+    - name: Reload firewalld
+      systemd:
+        name: firewalld
+        state: reloaded
