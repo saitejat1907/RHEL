@@ -3,8 +3,9 @@
   hosts: n1
   become: yes
   vars:
-    jar_src: "/tmp/weblogic.jar"  # Location where the JAR file is copied via scp
-    jar_dest: "/opt/app/weblogic.jar"  # Destination directory
+    jar_src: "/tmp/weblogic.jar"  # Location where JAR file is copied via SCP
+    jar_dest: "/opt/app/weblogic.jar"  # Destination path
+
   tasks:
 
     # Create app group
@@ -22,7 +23,7 @@
         shell: /bin/bash
         state: present
 
-    # Create /opt/app directory
+    # Create /opt/app directory if not exists
     - name: Create /opt/app directory
       file:
         path: /opt/app
@@ -35,25 +36,32 @@
     - name: Move WebLogic JAR file to /opt/app
       command: mv {{ jar_src }} {{ jar_dest }}
       args:
-        removes: "{{ jar_src }}"  # Removes the JAR file from /tmp after moving
-      become_user: app
-      ignore_errors: yes
+        removes: "{{ jar_src }}"  # Removes JAR from /tmp after moving
+      become: yes  # Run as root to move file
+      ignore_errors: no
 
     # Set correct ownership and permissions for WebLogic JAR
-    - name: Set permissions for WebLogic JAR
+    - name: Set ownership and permissions for WebLogic JAR
       file:
         path: "{{ jar_dest }}"
         owner: app
         group: appgroup
         mode: '0755'
 
-    # Install Java (if needed)
-    - name: Install Java 8
+    # Install Java 8 if not installed
+    - name: Check if Java 8 is installed
+      command: java -version
+      register: java_check
+      ignore_errors: yes
+      changed_when: false
+
+    - name: Install Java 8 (if not present)
       yum:
         name: java-1.8.0-openjdk
         state: present
+      when: java_check.failed
 
-    # Create the WebLogic response file (response.rsp)
+    # Create WebLogic response file (response.rsp)
     - name: Create response.rsp file
       copy:
         content: |
@@ -68,7 +76,7 @@
         group: appgroup
         mode: '0644'
 
-    # Create the central inventory location file (oraInst.loc)
+    # Create central inventory location file (oraInst.loc)
     - name: Create oraInst.loc file
       copy:
         content: |
@@ -86,7 +94,7 @@
       register: weblogic_install
       ignore_errors: yes
 
-    # Configure the WebLogic domain using WLST
+    # Configure WebLogic domain using WLST
     - name: Create WebLogic domain
       command: "/opt/app/weblogic/oracle_common/common/bin/wlst.sh /opt/app/create_domain.py"
       become_user: app
