@@ -5,7 +5,7 @@
   vars:
     jar_src: "/tmp/weblogic.jar"  # Location where the JAR file is copied via SCP
     jar_dest: "/opt/app/weblogic.jar"  # Destination directory
-    jdk_tar: "/tmp/jdk-8u202-linux-x64.tar"  # Path to the JDK tar file (after SCP)
+    jdk_tar: "/tmp/jdk-8u202-linux-x64.tar.gz"  # Path to the JDK tar file (after SCP)
     jdk_dest: "/usr/java/jdk1.8.0_202"  # Path where JDK will be installed
     create_domain_script: "/opt/app/create_domain.py"  # Path to the create_domain.py script
 
