@@ -10,173 +10,173 @@
     create_domain_script: "/opt/app/create_domain.py"  # Path to the create_domain.py script
 
   tasks:
-    # Create app group
-    - name: Create app group
-      group:
-        name: appgroup
-        state: present
+    # # Create app group
+    # - name: Create app group
+    #   group:
+    #     name: appgroup
+    #     state: present
 
-    # Create app user
-    - name: Create app user
-      user:
-        name: app
-        group: appgroup
-        create_home: yes
-        shell: /bin/bash
-        state: present
+    # # Create app user
+    # - name: Create app user
+    #   user:
+    #     name: app
+    #     group: appgroup
+    #     create_home: yes
+    #     shell: /bin/bash
+    #     state: present
 
-    # Create /opt/app directory
-    - name: Create /opt/app directory
-      file:
-        path: /opt/app
-        state: directory
-        owner: app
-        group: appgroup
-        mode: '0755'
+    # # Create /opt/app directory
+    # - name: Create /opt/app directory
+    #   file:
+    #     path: /opt/app
+    #     state: directory
+    #     owner: app
+    #     group: appgroup
+    #     mode: '0755'
 
-    # Move WebLogic JAR file to /opt/app/
-    - name: Move WebLogic JAR file to /opt/app
-      command: mv {{ jar_src }} {{ jar_dest }}
-      args:
-        removes: "{{ jar_src }}"  # Removes the JAR file from /tmp after moving
-      become_user: app
-      ignore_errors: yes
+    # # Move WebLogic JAR file to /opt/app/
+    # - name: Move WebLogic JAR file to /opt/app
+    #   command: mv {{ jar_src }} {{ jar_dest }}
+    #   args:
+    #     removes: "{{ jar_src }}"  # Removes the JAR file from /tmp after moving
+    #   become_user: app
+    #   ignore_errors: yes
 
-    # Set correct ownership and permissions for WebLogic JAR
-    - name: Set permissions for WebLogic JAR
-      file:
-        path: "{{ jar_dest }}"
-        owner: app
-        group: appgroup
-        mode: '0755'
+    # # Set correct ownership and permissions for WebLogic JAR
+    # - name: Set permissions for WebLogic JAR
+    #   file:
+    #     path: "{{ jar_dest }}"
+    #     owner: app
+    #     group: appgroup
+    #     mode: '0755'
 
-    # Check if Oracle JDK is installed
-    - name: Check if Oracle JDK is installed
-      stat:
-        path: "{{ jdk_dest }}"
-      register: jdk_stat
+    # # Check if Oracle JDK is installed
+    # - name: Check if Oracle JDK is installed
+    #   stat:
+    #     path: "{{ jdk_dest }}"
+    #   register: jdk_stat
 
-    # Ensure /usr/java/ directory exists
-    - name: Ensure /usr/java/ directory exists
-      file:
-        path: /usr/java
-        state: directory
-        mode: '0755'
+    # # Ensure /usr/java/ directory exists
+    # - name: Ensure /usr/java/ directory exists
+    #   file:
+    #     path: /usr/java
+    #     state: directory
+    #     mode: '0755'
 
-    # Extract Oracle JDK 8 if not already extracted
-    - name: Extract Oracle JDK 8
-      unarchive:
-        src: "{{ jdk_tar }}"
-        dest: /usr/java/
-        remote_src: yes
-      when: jdk_stat.stat.exists == false
+    # # Extract Oracle JDK 8 if not already extracted
+    # - name: Extract Oracle JDK 8
+    #   unarchive:
+    #     src: "{{ jdk_tar }}"
+    #     dest: /usr/java/
+    #     remote_src: yes
+    #   when: jdk_stat.stat.exists == false
 
-    # Set JAVA_HOME to Oracle JDK
-    - name: Set JAVA_HOME to Oracle JDK
-      lineinfile:
-        path: /etc/profile
-        line: 'export JAVA_HOME=/usr/java/jdk1.8.0_202'
-        create: yes
-      when: jdk_stat.stat.exists == false
+    # # Set JAVA_HOME to Oracle JDK
+    # - name: Set JAVA_HOME to Oracle JDK
+    #   lineinfile:
+    #     path: /etc/profile
+    #     line: 'export JAVA_HOME=/usr/java/jdk1.8.0_202'
+    #     create: yes
+    #   when: jdk_stat.stat.exists == false
 
-    # Add Oracle JDK to PATH
-    - name: Add Oracle JDK to PATH
-      lineinfile:
-        path: /etc/profile
-        line: 'export PATH=$JAVA_HOME/bin:$PATH'
-        create: yes
-      when: jdk_stat.stat.exists == false
+    # # Add Oracle JDK to PATH
+    # - name: Add Oracle JDK to PATH
+    #   lineinfile:
+    #     path: /etc/profile
+    #     line: 'export PATH=$JAVA_HOME/bin:$PATH'
+    #     create: yes
+    #   when: jdk_stat.stat.exists == false
 
-    # Source profile to apply changes
-    - name: Source profile to apply changes
-      shell: source /etc/profile
-      when: jdk_stat.stat.exists == false
+    # # Source profile to apply changes
+    # - name: Source profile to apply changes
+    #   shell: source /etc/profile
+    #   when: jdk_stat.stat.exists == false
 
-    # Create /var/opt/oracle directory if it does not exist
-    - name: Create /var/opt/oracle directory
-      file:
-        path: /var/opt/oracle
-        state: directory
-        owner: root
-        group: root
-        mode: '0755'
+    # # Create /var/opt/oracle directory if it does not exist
+    # - name: Create /var/opt/oracle directory
+    #   file:
+    #     path: /var/opt/oracle
+    #     state: directory
+    #     owner: root
+    #     group: root
+    #     mode: '0755'
 
-    # Create response.rsp file
-    - name: Create response.rsp file
-      copy:
-        content: |
-          [ENGINE]
-          Response File Version=1.0.0.0.0
+    # # Create response.rsp file
+    # - name: Create response.rsp file
+    #   copy:
+    #     content: |
+    #       [ENGINE]
+    #       Response File Version=1.0.0.0.0
           
-          [GENERIC]
-          ORACLE_HOME=/opt/app/weblogic
-          INSTALL_TYPE=WebLogic Server
-        dest: /opt/app/response.rsp
-        owner: app
-        group: appgroup
-        mode: '0644'
+    #       [GENERIC]
+    #       ORACLE_HOME=/opt/app/weblogic
+    #       INSTALL_TYPE=WebLogic Server
+    #     dest: /opt/app/response.rsp
+    #     owner: app
+    #     group: appgroup
+    #     mode: '0644'
 
-    # Create oraInst.loc file
-    - name: Create oraInst.loc file
-      copy:
-        content: |
-          inst_group=appgroup
-          inventory_loc=/opt/app/oraInventory
-        dest: /var/opt/oracle/oraInst.loc
-        owner: root
-        group: root
-        mode: '0644'
+    # # Create oraInst.loc file
+    # - name: Create oraInst.loc file
+    #   copy:
+    #     content: |
+    #       inst_group=appgroup
+    #       inventory_loc=/opt/app/oraInventory
+    #     dest: /var/opt/oracle/oraInst.loc
+    #     owner: root
+    #     group: root
+    #     mode: '0644'
 
-    # Create create_domain.py script for WebLogic domain
-    - name: Create create_domain.py script for WebLogic domain
-      copy:
-        content: |
-          #!/usr/bin/python
-          readTemplate("/opt/app/weblogic/wlserver/common/templates/wls/wls.jar")
+    # # Create create_domain.py script for WebLogic domain
+    # - name: Create create_domain.py script for WebLogic domain
+    #   copy:
+    #     content: |
+    #       #!/usr/bin/python
+    #       readTemplate("/opt/app/weblogic/wlserver/common/templates/wls/wls.jar")
           
-          cd('Servers/AdminServer')
-          set('ListenPort', 7001)
-          set('ListenAddress', '')
+    #       cd('Servers/AdminServer')
+    #       set('ListenPort', 7001)
+    #       set('ListenAddress', '')
           
-          cd('/')
-          cd('Security/base_domain/User/weblogic')
-          cmo.setName('weblogic')
-          cmo.setPassword('Web@1234')
+    #       cd('/')
+    #       cd('Security/base_domain/User/weblogic')
+    #       cmo.setName('weblogic')
+    #       cmo.setPassword('Web@1234')
           
-          # Set production mode and Java home
-          setOption('ServerStartMode', 'prod')
-          setOption('JavaHome', '/opt/java/jdk1.8.0_202')
-          setOption('OverwriteDomain', 'true')
+    #       # Set production mode and Java home
+    #       setOption('ServerStartMode', 'prod')
+    #       setOption('JavaHome', '/opt/java/jdk1.8.0_202')
+    #       setOption('OverwriteDomain', 'true')
           
-          # Write domain to the path
-          writeDomain('/opt/app/weblogic/user_projects/domains/mydomain')
-          closeTemplate()
+    #       # Write domain to the path
+    #       writeDomain('/opt/app/weblogic/user_projects/domains/mydomain')
+    #       closeTemplate()
           
-          exit()
-        dest: "{{ create_domain_script }}"
-        owner: app
-        group: appgroup
-        mode: '0755'
+    #       exit()
+    #     dest: "{{ create_domain_script }}"
+    #     owner: app
+    #     group: appgroup
+    #     mode: '0755'
 
-    # Run WebLogic installer
-    - name: Run WebLogic installer
-      command: java -jar {{ jar_dest }} -silent -responseFile /opt/app/response.rsp -invPtrLoc /var/opt/oracle/oraInst.loc
-      environment:
-        JAVA_HOME: "/usr/java/jdk1.8.0_202"
-        PATH: "/usr/java/jdk1.8.0_202/bin:{{ ansible_env.PATH }}"
-      become_user: app
-      register: weblogic_install
-      ignore_errors: yes
+    # # Run WebLogic installer
+    # - name: Run WebLogic installer
+    #   command: java -jar {{ jar_dest }} -silent -responseFile /opt/app/response.rsp -invPtrLoc /var/opt/oracle/oraInst.loc
+    #   environment:
+    #     JAVA_HOME: "/usr/java/jdk1.8.0_202"
+    #     PATH: "/usr/java/jdk1.8.0_202/bin:{{ ansible_env.PATH }}"
+    #   become_user: app
+    #   register: weblogic_install
+    #   ignore_errors: yes
 
-    # Configure the WebLogic domain using WLST
-    - name: Create WebLogic domain
-      # command: "/opt/app/weblogic/oracle_common/common/bin/wlst.sh {{ create_domain_script }}"
-      shell: |
-        cd /opt/app/weblogic/oracle_common/common/bin
-        ./wlst.sh /opt/app/weblogic/domain_creation.py
-      become_user: app
-      register: create_domain
-      ignore_errors: yes
+    # # Configure the WebLogic domain using WLST
+    # - name: Create WebLogic domain
+    #   # command: "/opt/app/weblogic/oracle_common/common/bin/wlst.sh {{ create_domain_script }}"
+    #   shell: |
+    #     cd /opt/app/weblogic/oracle_common/common/bin
+    #     ./wlst.sh /opt/app/weblogic/domain_creation.py
+    #   become_user: app
+    #   register: create_domain
+    #   ignore_errors: yes
 
     # Start WebLogic server
     - name: Start WebLogic server
