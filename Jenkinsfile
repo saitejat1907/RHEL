@@ -1,17 +1,3 @@
-// pipeline {
-//     agent any
-
-//     stages {
-//         stage("Ping All Hosts") {
-//             steps {
-//                 ansibleAdhoc credentialsId: 'Ansible',
-//                                disableHostKeyChecking: true,
-//                                inventory: 'dev.inv',
-//                                command: 'all -m ping'
-//             }
-//         }
-//     }
-// }
 
 pipeline {
     agent any
@@ -29,6 +15,15 @@ pipeline {
                                  installation: 'Ansible',
                                  inventory: 'dev.inv',
                                  playbook: 'Playbook/serviceaccount.yml'
+            }
+        }
+        stage("Execute WebLogic Playbook") {
+            steps {
+                ansiblePlaybook credentialsId: 'Ansible',
+                                 disableHostKeyChecking: true,
+                                 installation: 'Ansible',
+                                 inventory: 'dev.inv',
+                                 playbook: 'Playbook/weblogic.yml'
             }
         }
     }
