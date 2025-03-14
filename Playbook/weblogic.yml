@@ -94,7 +94,7 @@
       copy:
         content: |
           inst_group=appgroup
-          inventory_loc=/opt/weblogicapp/oraInventory
+          inventory_loc=/opt/app/oraInventory
         dest: /var/opt/oracle/oraInst.loc
         owner: root
         group: root
