@@ -161,6 +161,9 @@
     # Run WebLogic installer
     - name: Run WebLogic installer
       command: java -jar {{ jar_dest }} -silent -responseFile /opt/app/response.rsp -invPtrLoc /var/opt/oracle/oraInst.loc
+      environment:
+        JAVA_HOME: "/usr/java/jdk1.8.0_202"
+        PATH: "/usr/java/jdk1.8.0_202/bin:{{ ansible_env.PATH }}"
       become_user: app
       register: weblogic_install
       ignore_errors: yes
