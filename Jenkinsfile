@@ -17,13 +17,22 @@ pipeline {
         //                          playbook: 'Playbook/serviceaccount.yml'
         //     }
         // }
-        stage("Execute WebLogic Playbook") {
+        // stage("Execute WebLogic Playbook") {
+        //     steps {
+        //         ansiblePlaybook credentialsId: 'Ansible',
+        //                          disableHostKeyChecking: true,
+        //                          installation: 'Ansible',
+        //                          inventory: 'dev.inv',
+        //                          playbook: 'Playbook/weblogic.yml'
+        //     }
+        // }
+        stage("Execute apache Playbook") {
             steps {
                 ansiblePlaybook credentialsId: 'Ansible',
                                  disableHostKeyChecking: true,
                                  installation: 'Ansible',
                                  inventory: 'dev.inv',
-                                 playbook: 'Playbook/weblogic.yml'
+                                 playbook: 'Playbook/apache.yml'
             }
         }
     }
