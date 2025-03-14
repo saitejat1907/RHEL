@@ -5,8 +5,9 @@
   vars:
     jar_src: "/tmp/weblogic.jar"  # Location where the JAR file is copied via SCP
     jar_dest: "/opt/app/weblogic.jar"  # Destination directory
-    oracle_jdk_url: "https://path/to/oracle/jdk-8u271-linux-x64.tar.gz"  # Replace with the correct URL for Oracle JDK
-    oracle_jdk_dest: "/opt/java/jdk1.8.0_271"  # Path where JDK will be installed
+    jdk_tar: "/tmp/jdk-8u202-linux-x64.tar"  # Path to the JDK tar file (after SCP)
+    jdk_dest: "/opt/java/jdk1.8.0_202"  # Path where JDK will be installed
+    create_domain_script: "/opt/app/create_domain.py"  # Path to the create_domain.py script
 
   tasks:
 
@@ -34,7 +35,7 @@
         group: appgroup
         mode: '0755'
 
-    # Move WebLogic JAR file from /tmp to /opt/app/
+    # Move WebLogic JAR file to /opt/app/
     - name: Move WebLogic JAR file to /opt/app
       command: mv {{ jar_src }} {{ jar_dest }}
       args:
@@ -50,23 +51,16 @@
         group: appgroup
         mode: '0755'
 
-    # Check if Java (Oracle JDK) is installed
+    # Check if Oracle JDK is installed
     - name: Check if Oracle JDK is installed
       stat:
-        path: "{{ oracle_jdk_dest }}"
+        path: "{{ jdk_dest }}"
       register: jdk_stat
-
-    # Download Oracle JDK 8 if not already installed
-    - name: Download Oracle JDK 8 tar.gz
-      get_url:
-        url: "{{ oracle_jdk_url }}"
-        dest: /tmp/jdk-8u271-linux-x64.tar.gz
-      when: jdk_stat.stat.exists == false
 
     # Extract Oracle JDK 8 if not already extracted
     - name: Extract Oracle JDK 8
       unarchive:
-        src: /tmp/jdk-8u271-linux-x64.tar.gz
+        src: "{{ jdk_tar }}"
         dest: /opt/java/
         remote_src: yes
       when: jdk_stat.stat.exists == false
@@ -75,7 +69,7 @@
     - name: Set JAVA_HOME to Oracle JDK
       lineinfile:
         path: /etc/profile
-        line: 'export JAVA_HOME=/opt/java/jdk1.8.0_271'
+        line: 'export JAVA_HOME=/opt/java/jdk1.8.0_202'
         create: yes
       when: jdk_stat.stat.exists == false
 
@@ -127,7 +121,38 @@
         group: root
         mode: '0644'
 
-    # Run WebLogic installer using Oracle JDK
+    # Create create_domain.py script for WebLogic domain
+    - name: Create create_domain.py script for WebLogic domain
+      copy:
+        content: |
+          #!/usr/bin/python
+          readTemplate("/opt/app/weblogic/wlserver/common/templates/wls/wls.jar")
+          
+          cd('Servers/AdminServer')
+          set('ListenPort', 7001)
+          set('ListenAddress', '')
+          
+          cd('/')
+          cd('Security/base_domain/User/weblogic')
+          cmo.setName('weblogic')
+          cmo.setPassword('Web@1234')
+          
+          # Set production mode and Java home
+          setOption('ServerStartMode', 'prod')
+          setOption('JavaHome', '/opt/java/jdk1.8.0_202')
+          setOption('OverwriteDomain', 'true')
+          
+          # Write domain to the path
+          writeDomain('/opt/app/weblogic/user_projects/domains/mydomain')
+          closeTemplate()
+          
+          exit()
+        dest: "{{ create_domain_script }}"
+        owner: app
+        group: appgroup
+        mode: '0755'
+
+    # Run WebLogic installer
     - name: Run WebLogic installer
       command: java -jar {{ jar_dest }} -silent -responseFile /opt/app/response.rsp -invPtrLoc /var/opt/oracle/oraInst.loc
       become_user: app
@@ -136,7 +161,7 @@
 
     # Configure the WebLogic domain using WLST
     - name: Create WebLogic domain
-      command: "/opt/app/weblogic/oracle_common/common/bin/wlst.sh /opt/app/create_domain.py"
+      command: "/opt/app/weblogic/oracle_common/common/bin/wlst.sh {{ create_domain_script }}"
       become_user: app
       register: create_domain
       ignore_errors: yes
