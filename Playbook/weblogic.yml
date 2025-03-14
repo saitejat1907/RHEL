@@ -3,9 +3,8 @@
   hosts: n1
   become: yes
   vars:
-    jar_src: "/tmp/weblogic.jar"  # Location where JAR file is copied via SCP
-    jar_dest: "/opt/app/weblogic.jar"  # Destination path
-
+    jar_src: "/tmp/weblogic.jar"  # Location where the JAR file is copied via SCP
+    jar_dest: "/opt/app/weblogic.jar"  # Destination directory
   tasks:
 
     # Create app group
@@ -23,7 +22,7 @@
         shell: /bin/bash
         state: present
 
-    # Create /opt/app directory if not exists
+    # Create /opt/app directory
     - name: Create /opt/app directory
       file:
         path: /opt/app
@@ -36,32 +35,46 @@
     - name: Move WebLogic JAR file to /opt/app
       command: mv {{ jar_src }} {{ jar_dest }}
       args:
-        removes: "{{ jar_src }}"  # Removes JAR from /tmp after moving
-      become: yes  # Run as root to move file
-      ignore_errors: no
+        removes: "{{ jar_src }}"  # Removes the JAR file from /tmp after moving
+      become_user: app
+      ignore_errors: yes
 
     # Set correct ownership and permissions for WebLogic JAR
-    - name: Set ownership and permissions for WebLogic JAR
+    - name: Set permissions for WebLogic JAR
       file:
         path: "{{ jar_dest }}"
         owner: app
         group: appgroup
         mode: '0755'
 
-    # Install Java 8 if not installed
-    - name: Check if Java 8 is installed
+    # Check if Java is installed and print the version
+    - name: Check if Java is installed
       command: java -version
-      register: java_check
+      register: java_version
       ignore_errors: yes
-      changed_when: false
 
-    - name: Install Java 8 (if not present)
+    # Print current Java version
+    - name: Show current Java version
+      debug:
+        msg: "Current Java version: {{ java_version.stderr }}"
+
+    # Install Java 8 (if needed)
+    - name: Install Java 8
       yum:
         name: java-1.8.0-openjdk
         state: present
-      when: java_check.failed
+      when: java_version.rc != 0  # Install if Java is not present
 
-    # Create WebLogic response file (response.rsp)
+    # Create /var/opt/oracle directory if it does not exist
+    - name: Create /var/opt/oracle directory
+      file:
+        path: /var/opt/oracle
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+
+    # Create response.rsp file
     - name: Create response.rsp file
       copy:
         content: |
@@ -76,7 +89,7 @@
         group: appgroup
         mode: '0644'
 
-    # Create central inventory location file (oraInst.loc)
+    # Create oraInst.loc file
     - name: Create oraInst.loc file
       copy:
         content: |
@@ -94,7 +107,7 @@
       register: weblogic_install
       ignore_errors: yes
 
-    # Configure WebLogic domain using WLST
+    # Configure the WebLogic domain using WLST
     - name: Create WebLogic domain
       command: "/opt/app/weblogic/oracle_common/common/bin/wlst.sh /opt/app/create_domain.py"
       become_user: app
@@ -108,15 +121,17 @@
       register: start_weblogic
       ignore_errors: yes
 
-    # Show outputs
+    # Show WebLogic installation output
     - name: Show WebLogic installation output
       debug:
         msg: "{{ weblogic_install.stdout }}"
 
+    # Show domain creation output
     - name: Show domain creation output
       debug:
         msg: "{{ create_domain.stdout }}"
 
+    # Show WebLogic start output
     - name: Show WebLogic start output
       debug:
         msg: "{{ start_weblogic.stdout }}"
