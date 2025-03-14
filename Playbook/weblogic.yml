@@ -173,7 +173,7 @@
       # command: "/opt/app/weblogic/oracle_common/common/bin/wlst.sh {{ create_domain_script }}"
       shell: |
         cd /opt/app/weblogic/oracle_common/common/bin
-        ./wlst.sh /opt/app/domain_creation.py
+        ./wlst.sh /opt/app/create_domain.py
       become_user: app
       register: create_domain
       ignore_errors: yes
