@@ -1,0 +1,60 @@
+---
+- name: Install and Configure MySQL 8.4 on RHEL 9 and Migrate from Solaris 11 MySQL 5.7
+  hosts: n1
+  become: yes
+  tasks:
+    # Install MySQL 8 repository on RHEL 9
+    - name: Install MySQL 8.4 repository
+      ansible.builtin.yum:
+        name: /etc/yum.repos.d/mysql84-community-release-el9-1.noarch.rpm
+        state: present
+
+    # Install MySQL 8.4
+    - name: Install MySQL 8.4
+      yum:
+        name: mysql-community-server
+        state: present
+
+    # Start MySQL service on RHEL 9
+    - name: Start MySQL service
+      service:
+        name: mysqld
+        state: started
+        enabled: yes
+
+    # Get MySQL root password from the MySQL log
+    - name: Get MySQL temporary root password
+      shell: grep 'temporary password' /var/log/mysqld.log | awk '{print $NF}'
+      register: mysql_root_password
+      changed_when: false
+      
+    - name: Reset MySQL root password (handle expired password)
+      shell: |
+        mysql --connect-expired-password -u root -p{{ mysql_root_password.stdout }} \
+        -e "ALTER USER 'root'@'localhost' IDENTIFIED BY 'Matilda@1234';"
+      ignore_errors: yes
+
+    
+# - name: Secure MySQL installation manually
+#   hosts: n1
+#   become: yes
+#   tasks:
+
+#     - name: Disallow root login remotely
+#       community.mysql.mysql_query:
+#         query: "DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1');"
+#         login_user: root
+#         login_password: Matilda@123
+
+#     - name: Remove test database
+#       community.mysql.mysql_db:
+#         name: test
+#         state: absent
+#         login_user: root
+#         login_password: Matilda@123
+
+#     - name: Flush privileges
+#       community.mysql.mysql_query:
+#         query: "FLUSH PRIVILEGES;"
+#         login_user: root
+#         login_password: Matilda@123
