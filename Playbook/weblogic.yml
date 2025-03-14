@@ -5,7 +5,8 @@
   vars:
     jar_src: "/tmp/weblogic.jar"  # Location where the JAR file is copied via SCP
     jar_dest: "/opt/app/weblogic.jar"  # Destination directory
-    oracle_jdk_version: "jdk-8u281-linux-x64.tar.gz"  # Example Oracle JDK package filename
+    oracle_jdk_url: "https://path/to/oracle/jdk-8u271-linux-x64.tar.gz"  # Replace with the correct URL for Oracle JDK
+    oracle_jdk_dest: "/opt/java/jdk1.8.0_271"  # Path where JDK will be installed
 
   tasks:
 
@@ -49,53 +50,47 @@
         group: appgroup
         mode: '0755'
 
-    # Check if Java is installed and print the version
-    - name: Check if Java is installed
-      command: java -version
-      register: java_version
-      ignore_errors: yes
+    # Check if Java (Oracle JDK) is installed
+    - name: Check if Oracle JDK is installed
+      stat:
+        path: "{{ oracle_jdk_dest }}"
+      register: jdk_stat
 
-    # Print current Java version
-    - name: Show current Java version
-      debug:
-        msg: "Current Java version: {{ java_version.stderr }}"
+    # Download Oracle JDK 8 if not already installed
+    - name: Download Oracle JDK 8 tar.gz
+      get_url:
+        url: "{{ oracle_jdk_url }}"
+        dest: /tmp/jdk-8u271-linux-x64.tar.gz
+      when: jdk_stat.stat.exists == false
 
-    # Install Oracle JDK 8 (if needed)
-    - name: Install Oracle JDK 8
-      block:
-        - name: Download Oracle JDK 8 tar.gz
-          get_url:
-            url: "https://download.oracle.com/otn-pub/java/jdk/8u281-b09/{{ oracle_jdk_version }}"
-            dest: /tmp/{{ oracle_jdk_version }}
-            headers:
-              Cookie: "oraclelicense=accept-securebackup-cookie"  # Automatically accept Oracle's license
-          become: yes
+    # Extract Oracle JDK 8 if not already extracted
+    - name: Extract Oracle JDK 8
+      unarchive:
+        src: /tmp/jdk-8u271-linux-x64.tar.gz
+        dest: /opt/java/
+        remote_src: yes
+      when: jdk_stat.stat.exists == false
 
-        - name: Extract Oracle JDK 8
-          unarchive:
-            src: /tmp/{{ oracle_jdk_version }}
-            dest: /opt/
-            remote_src: yes
-          become: yes
+    # Set JAVA_HOME to Oracle JDK
+    - name: Set JAVA_HOME to Oracle JDK
+      lineinfile:
+        path: /etc/profile
+        line: 'export JAVA_HOME=/opt/java/jdk1.8.0_271'
+        create: yes
+      when: jdk_stat.stat.exists == false
 
-        - name: Set JAVA_HOME to Oracle JDK
-          lineinfile:
-            path: /etc/profile
-            regexp: '^export JAVA_HOME='
-            line: 'export JAVA_HOME=/opt/jdk1.8.0_281'  # Adjust path based on your JDK version
-          become: yes
+    # Add Oracle JDK to PATH
+    - name: Add Oracle JDK to PATH
+      lineinfile:
+        path: /etc/profile
+        line: 'export PATH=$JAVA_HOME/bin:$PATH'
+        create: yes
+      when: jdk_stat.stat.exists == false
 
-        - name: Add Oracle JDK to PATH
-          lineinfile:
-            path: /etc/profile
-            regexp: '^export PATH='
-            line: 'export PATH=$JAVA_HOME/bin:$PATH'
-          become: yes
-
-        - name: Source profile to apply changes
-          shell: source /etc/profile
-          become: yes
-      when: java_version.rc != 0  # Install only if Java is not present
+    # Source profile to apply changes
+    - name: Source profile to apply changes
+      command: source /etc/profile
+      when: jdk_stat.stat.exists == false
 
     # Create /var/opt/oracle directory if it does not exist
     - name: Create /var/opt/oracle directory
@@ -132,7 +127,7 @@
         group: root
         mode: '0644'
 
-    # Run WebLogic installer
+    # Run WebLogic installer using Oracle JDK
     - name: Run WebLogic installer
       command: java -jar {{ jar_dest }} -silent -responseFile /opt/app/response.rsp -invPtrLoc /var/opt/oracle/oraInst.loc
       become_user: app
