@@ -6,7 +6,7 @@
     jar_src: "/tmp/weblogic.jar"  # Location where the JAR file is copied via SCP
     jar_dest: "/opt/app/weblogic.jar"  # Destination directory
     jdk_tar: "/tmp/jdk-8u202-linux-x64.tar"  # Path to the JDK tar file (after SCP)
-    jdk_dest: "/opt/java/jdk1.8.0_202"  # Path where JDK will be installed
+    jdk_dest: "/usr/java/jdk1.8.0_202"  # Path where JDK will be installed
     create_domain_script: "/opt/app/create_domain.py"  # Path to the create_domain.py script
 
   tasks:
@@ -61,7 +61,7 @@
     - name: Extract Oracle JDK 8
       unarchive:
         src: "{{ jdk_tar }}"
-        dest: /opt/java/
+        dest: /usr/java/
         remote_src: yes
       when: jdk_stat.stat.exists == false
 
@@ -69,7 +69,7 @@
     - name: Set JAVA_HOME to Oracle JDK
       lineinfile:
         path: /etc/profile
-        line: 'export JAVA_HOME=/opt/java/jdk1.8.0_202'
+        line: 'export JAVA_HOME=/usr/java/jdk1.8.0_202'
         create: yes
       when: jdk_stat.stat.exists == false
 
@@ -173,17 +173,12 @@
       register: start_weblogic
       ignore_errors: yes
 
-    # Show WebLogic installation output
-    - name: Show WebLogic installation output
-      debug:
-        msg: "{{ weblogic_install.stdout }}"
-
-    # Show domain creation output
-    - name: Show domain creation output
-      debug:
-        msg: "{{ create_domain.stdout }}"
-
-    # Show WebLogic start output
+    # Show WebLogic startup output (stdout)
     - name: Show WebLogic start output
       debug:
         msg: "{{ start_weblogic.stdout }}"
+
+    # Show WebLogic startup error output (stderr)
+    - name: Show WebLogic start error output
+      debug:
+        msg: "{{ start_weblogic.stderr }}"
