@@ -89,7 +89,7 @@
 
     # Source profile to apply changes
     - name: Source profile to apply changes
-      command: source /etc/profile
+      shell: source /etc/profile
       when: jdk_stat.stat.exists == false
 
     # Create /var/opt/oracle directory if it does not exist
