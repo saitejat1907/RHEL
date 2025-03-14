@@ -168,15 +168,15 @@
     #   register: weblogic_install
     #   ignore_errors: yes
 
-    # # Configure the WebLogic domain using WLST
-    # - name: Create WebLogic domain
-    #   # command: "/opt/app/weblogic/oracle_common/common/bin/wlst.sh {{ create_domain_script }}"
-    #   shell: |
-    #     cd /opt/app/weblogic/oracle_common/common/bin
-    #     ./wlst.sh /opt/app/weblogic/domain_creation.py
-    #   become_user: app
-    #   register: create_domain
-    #   ignore_errors: yes
+    # Configure the WebLogic domain using WLST
+    - name: Create WebLogic domain
+      # command: "/opt/app/weblogic/oracle_common/common/bin/wlst.sh {{ create_domain_script }}"
+      shell: |
+        cd /opt/app/weblogic/oracle_common/common/bin
+        ./wlst.sh /opt/app/weblogic/domain_creation.py
+      become_user: app
+      register: create_domain
+      ignore_errors: yes
 
     # Start WebLogic server
     - name: Start WebLogic server
