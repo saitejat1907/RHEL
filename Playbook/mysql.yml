@@ -3,37 +3,46 @@
   hosts: n1
   become: yes
   tasks:
+  
     # Install MySQL 8 repository on RHEL 9
-    - name: Install MySQL 8.4 repository
-      ansible.builtin.yum:
-        name: /etc/yum.repos.d/mysql84-community-release-el9-1.noarch.rpm
+    - name: Install MySQL 8.4 repository from local file
+      ansible.builtin.dnf:
+        name: /tmp/mysql84-community-release-el9-1.noarch.rpm
         state: present
+        disable_gpg_check: yes
 
     # Install MySQL 8.4
     - name: Install MySQL 8.4
-      yum:
+      ansible.builtin.dnf:
         name: mysql-community-server
         state: present
 
     # Start MySQL service on RHEL 9
-    - name: Start MySQL service
-      service:
+    - name: Start and enable MySQL service
+      ansible.builtin.systemd:
         name: mysqld
         state: started
         enabled: yes
 
     # Get MySQL root password from the MySQL log
     - name: Get MySQL temporary root password
-      shell: grep 'temporary password' /var/log/mysqld.log | awk '{print $NF}'
+      shell: "grep 'temporary password' /var/log/mysqld.log | awk '{print $NF}'"
       register: mysql_root_password
       changed_when: false
-      
-    - name: Reset MySQL root password (handle expired password)
+      ignore_errors: yes
+
+    # Reset MySQL root password (handle expired password)
+    - name: Reset MySQL root password
       shell: |
-        mysql --connect-expired-password -u root -p{{ mysql_root_password.stdout }} \
+        mysql --connect-expired-password -u root -p'{{ mysql_root_password.stdout }}' \
         -e "ALTER USER 'root'@'localhost' IDENTIFIED BY 'Matilda@1234';"
       ignore_errors: yes
 
+    # Ensure MySQL is running after password reset
+    - name: Restart MySQL service
+      ansible.builtin.systemd:
+        name: mysqld
+        state: restarted
     
 # - name: Secure MySQL installation manually
 #   hosts: n1
