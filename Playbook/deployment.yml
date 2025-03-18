@@ -49,7 +49,7 @@
         path: "{{ war_file_src }}"
         owner: app
         group: appgroup
-        mode: '0644"
+        mode: '0644'
 
     # Deploy WAR File Using WLST
     - name: Copy WAR file to WebLogic Server
