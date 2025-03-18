@@ -18,7 +18,14 @@
     deploy_script: "/opt/app/deploy_app.py"
 
   tasks:
-    # Remove the Start WebLogic Task
+
+    - name: Ensure security directory exists
+      file:
+        path: /opt/app/weblogic/user_projects/domains/mydomain/servers/AdminServer/security
+        state: directory
+        owner: app
+        group: appgroup
+        mode: '0755'
 
     # Configure WebLogic to Auto-Start Without Credentials
     - name: Create boot.properties for AdminServer
@@ -30,14 +37,6 @@
         owner: app
         group: appgroup
         mode: '0600'
-
-    - name: Ensure security directory exists
-      file:
-        path: /opt/app/weblogic/user_projects/domains/mydomain/servers/AdminServer/security
-        state: directory
-        owner: app
-        group: appgroup
-        mode: '0755'
 
 
     - name: Modify startWebLogic.sh to Auto-Use boot.properties
