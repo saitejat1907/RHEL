@@ -32,7 +32,7 @@ pipeline {
                                  disableHostKeyChecking: true,
                                  installation: 'Ansible',
                                  inventory: 'dev.inv',
-                                 playbook: 'Playbook/mysql.yml'
+                                 playbook: 'Playbook/deployment.yml'
             }
         }
     }

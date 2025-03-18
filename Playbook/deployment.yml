@@ -1,0 +1,85 @@
+---
+- name: WebLogic Installation and Deployment on RHEL
+  hosts: n1
+  become: yes
+  vars:
+    # jar_src: "/tmp/weblogic.jar"
+    # jar_dest: "/opt/app/weblogic.jar"
+    # jdk_tar: "/tmp/jdk-8u202-linux-x64.tar.gz"
+    # jdk_dest: "/usr/java/jdk1.8.0_202"
+    # create_domain_script: "/opt/app/create_domain.py"
+    domain_path: "/opt/app/weblogic/user_projects/domains/mydomain"
+    admin_user: "weblogic"
+    admin_pass: "Web@1234"
+    war_file_src: "/tmp/LoginWebApp.war"  # Source WAR file (copied via SCP)
+    war_file_dest: "/opt/app/LoginWebApp.war"
+    app_name: "LoginWebApp"
+    admin_url: "t3://172.24.8.188:7001"
+    deploy_script: "/opt/app/deploy_app.py"
+
+  tasks:
+    # Remove the Start WebLogic Task
+
+    # Configure WebLogic to Auto-Start Without Credentials
+    - name: Create boot.properties for AdminServer
+      copy:
+        content: |
+          username={{ admin_user }}
+          password={{ admin_pass }}
+        dest: "{{ domain_path }}/servers/AdminServer/security/boot.properties"
+        owner: app
+        group: appgroup
+        mode: '0600'
+
+    - name: Modify startWebLogic.sh to Auto-Use boot.properties
+      lineinfile:
+        path: "{{ domain_path }}/bin/startWebLogic.sh"
+        insertafter: "DOMAIN_HOME="
+        line: "export WLS_USER={{ admin_user }} && export WLS_PW={{ admin_pass }}"
+
+    - name: Start WebLogic Server in Background
+      shell: "nohup {{ domain_path }}/bin/startWebLogic.sh &"
+      become_user: app
+      async: 45
+      poll: 0
+
+    # Ensure correct ownership of WAR file before moving
+    - name: Change ownership of WAR file to app:appgroup
+      file:
+        path: "{{ war_file_src }}"
+        owner: app
+        group: appgroup
+        mode: '0644"
+
+    # Deploy WAR File Using WLST
+    - name: Copy WAR file to WebLogic Server
+      copy:
+        src: "{{ war_file_src }}"
+        dest: "{{ war_file_dest }}"
+        owner: app
+        group: appgroup
+        mode: '0644'
+
+    - name: Create deploy_app.py script for deployment
+      copy:
+        content: |
+          connect('{{ admin_user }}', '{{ admin_pass }}', '{{ admin_url }}')
+          deploy('{{ app_name }}', '{{ war_file_dest }}', targets='AdminServer')
+          disconnect()
+          exit()
+        dest: "{{ deploy_script }}"
+        owner: app
+        group: appgroup
+        mode: '0755'
+
+    - name: Deploy Application via WLST
+      shell: |
+        cd /opt/app/weblogic/oracle_common/common/bin
+        ./wlst.sh {{ deploy_script }}
+      become_user: app
+      register: deploy_output
+      ignore_errors: yes
+
+    - name: Show Deployment Output
+      debug:
+        msg: "{{ deploy_output.stdout }}"
