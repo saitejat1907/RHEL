@@ -52,12 +52,12 @@
       poll: 0
 
     # Ensure correct ownership of WAR file before moving
-    - name: Change ownership of WAR file to app:appgroup
-      file:
-        path: "{{ war_file_src }}"
-        owner: app
-        group: appgroup
-        mode: '0644'
+    # - name: Change ownership of WAR file to app:appgroup
+    #   file:
+    #     path: "{{ war_file_src }}"
+    #     owner: app
+    #     group: appgroup
+    #     mode: '0644'
 
     # Deploy WAR File Using WLST
     - name: Copy WAR file to WebLogic Server
