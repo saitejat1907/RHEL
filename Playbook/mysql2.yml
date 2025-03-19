@@ -50,8 +50,10 @@
     #     timeout: 40
 
     - name: Alter root user with final password
-      community.mysql.mysql_query:
-        login_user: root
-        login_password: "{{ mysql_final_password }}"
-        query: "ALTER USER 'root'@'localhost' IDENTIFIED BY '{{ mysql_final_password }}';"
+      ansible.builtin.shell: |
+        mysql -u root -p{{ mysql_final_password }} -S /tmp/mysql.sock -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '{{ mysql_final_password }}';"
+      become: yes
+      register: alter_password
+      changed_when: true
+
 
