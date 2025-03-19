@@ -24,6 +24,12 @@
       args:
         creates: "{{ mysql_socket }}"
 
+    - name: Wait for MySQL socket to be available
+      ansible.builtin.wait_for:
+        path: "{{ mysqld_socket }}"
+        state: present
+        timeout: 20
+
     - name: Log into MySQL and check user plugin authentication
       ansible.builtin.shell: |
         mysql -u root -S /tmp/mysql.sock -e "SELECT User, Host, plugin FROM mysql.user WHERE User='root';"
