@@ -19,7 +19,7 @@
 
     - name: Start MySQL in safe mode (skip grant tables)
       ansible.builtin.shell: |
-        nohup {{ mysql_bin_path }}/mysqld_safe --skip-grant-tables --skip-networking --datadir={{ mysql_datadir }} --socket={{ mysql_socket }} --pid-file=/var/run/mysqld/mysqld.pid &
+        setsid {{ mysql_bin_path }}/mysqld_safe --skip-grant-tables --skip-networking --datadir={{ mysql_datadir }} --socket={{ mysql_socket }} --pid-file=/var/run/mysqld/mysqld.pid &
       async: 10
       poll: 0
 
