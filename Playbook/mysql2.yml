@@ -51,7 +51,7 @@
 
     - name: Alter root user with final password
       ansible.builtin.shell: |
-        mysql -u root -p{{ mysql_final_password }} -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '{{ mysql_final_password }}';"
+        mysql -u root -p '{{ mysql_final_password }}' -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '{{ mysql_final_password }}';"
       become: yes
       register: alter_password
       changed_when: true
