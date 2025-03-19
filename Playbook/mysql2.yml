@@ -25,7 +25,7 @@
 
     - name: Log into MySQL and check user plugin authentication
       ansible.builtin.shell: |
-        mysql -u root -e "SELECT User, Host, plugin FROM mysql.user WHERE User='root';"
+        mysql -u root -S /tmp/mysql.sock -e "SELECT User, Host, plugin FROM mysql.user WHERE User='root';"
       register: mysql_auth_plugin
       changed_when: false
 
