@@ -33,8 +33,8 @@ pipeline {
                                  installation: 'Ansible',
                                  inventory: 'dev.inv',
                                  playbook: 'Playbook/mysql.yml'
-        //     }
-        // }
+            }
+        }
         // stage("Execute apache Playbook") {
         //     steps {
         //         ansiblePlaybook credentialsId: 'Ansible',
