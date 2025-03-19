@@ -33,10 +33,14 @@
 
     # Reset MySQL root password (handle expired password)
     - name: Reset MySQL root password
-      shell: |
-        mysql --connect-expired-password -u root -p'{{ mysql_root_password.stdout }}' \
-        -e "ALTER USER 'root'@'localhost' IDENTIFIED BY 'Matilda@1234';"
+      expect:
+        command: mysql --connect-expired-password -u root -p'{{ mysql_root_password.stdout }}'
+        responses:
+          "Enter password:": "{{ mysql_root_password.stdout }}"
+          "New password:": "Matilda@1234"
+          "Re-enter new password:": "Matilda@1234"
       ignore_errors: yes
+
 
     # Ensure MySQL is running after password reset
     - name: Restart MySQL service
