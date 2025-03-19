@@ -44,10 +44,10 @@
         state: started
         enabled: yes
 
-    # - name: Wait for MySQL to fully start
-    #   ansible.builtin.wait_for:
-    #     path: "{{ mysql_socket }}"
-    #     timeout: 40
+    - name: Wait for MySQL to fully start
+      ansible.builtin.wait_for:
+        path: "{{ mysql_socket }}"
+        timeout: 40
 
     - name: Alter root user with final password
       ansible.builtin.shell: |
