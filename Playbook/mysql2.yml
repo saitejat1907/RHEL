@@ -17,9 +17,11 @@
 
     - name: Start MySQL in safe mode (skip grant tables)
       ansible.builtin.shell: |
-        setsid {{ mysql_bin_path }}/mysqld --skip-grant-tables --skip-networking --datadir={{ mysql_datadir }} --socket={{ mysql_socket }} --pid-file=/var/run/mysqld/mysqld.pid &
+        setsid sudo -u mysql {{ mysql_bin_path }}/mysqld --skip-grant-tables --skip-networking --datadir={{ mysql_datadir }} --socket={{ mysql_socket }} --pid-file=/var/run/mysqld/mysqld.pid &
       async: 10
       poll: 0
+      args:
+        creates: "{{ mysql_socket }}"
 
     - name: Log into MySQL and check user plugin authentication
       ansible.builtin.shell: |
