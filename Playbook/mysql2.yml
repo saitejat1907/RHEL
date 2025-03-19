@@ -1,0 +1,56 @@
+- name: Automate MySQL 8.4 Password Recovery and User Creation on RHEL 9
+  hosts: n1
+  become: yes
+  vars:
+    mysql_root_password: "Matilda@123"
+    mysql_final_password: "Matilda@1234"
+    mysql_user: "root"
+    mysql_socket: "/var/lib/mysql/mysql.sock"
+    mysql_datadir: "/var/lib/mysql"
+    mysql_bin_path: "/usr/bin"
+    app_user: "appuser"
+    app_user_password: "APPuser"
+
+  tasks:
+    - name: Stop MySQL service if running
+      ansible.builtin.service:
+        name: mysqld
+        state: stopped
+
+    - name: Start MySQL in safe mode (skip grant tables)
+      ansible.builtin.shell: |
+        nohup {{ mysql_bin_path }}/mysqld_safe --skip-grant-tables --skip-networking --datadir={{ mysql_datadir }} --socket={{ mysql_socket }} --pid-file=/var/run/mysqld/mysqld.pid &
+      async: 10
+      poll: 0
+
+    - name: Log into MySQL and check user plugin authentication
+      ansible.builtin.shell: |
+        mysql -u root -e "SELECT User, Host, plugin FROM mysql.user WHERE User='root';"
+      register: mysql_auth_plugin
+      changed_when: false
+
+    - name: Reset MySQL root password in safe mode
+      ansible.builtin.shell: |
+        mysql -u root -e "UPDATE mysql.user SET authentication_string=PASSWORD('{{ mysql_root_password }}'), plugin='mysql_native_password' WHERE User='root';"
+        mysql -u root -e "FLUSH PRIVILEGES;"
+
+    - name: Stop MySQL safe mode
+      ansible.builtin.shell: "pkill -f mysqld_safe"
+
+    - name: Start MySQL normally
+      ansible.builtin.service:
+        name: mysqld
+        state: started
+        enabled: yes
+
+    - name: Wait for MySQL to fully start
+      ansible.builtin.wait_for:
+        path: "{{ mysql_socket }}"
+        timeout: 40
+
+    - name: Alter root user with final password
+      community.mysql.mysql_query:
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+        query: "ALTER USER 'root'@'localhost' IDENTIFIED BY '{{ mysql_final_password }}';"
+
