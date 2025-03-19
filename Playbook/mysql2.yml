@@ -5,7 +5,8 @@
     mysql_root_password: "Matilda@123"
     mysql_final_password: "Matilda@1234"
     mysql_user: "root"
-    mysql_socket: "/tmp/mysql.sock"
+    mysqld_socket: "/tmp/mysql.sock"
+    mysql_socket: "/var/lib/mysql/mysql.sock"
     mysql_datadir: "/var/lib/mysql"
     mysql_bin_path: "/usr/sbin"
 
