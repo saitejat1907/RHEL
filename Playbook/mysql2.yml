@@ -7,9 +7,7 @@
     mysql_user: "root"
     mysql_socket: "/var/lib/mysql/mysql.sock"
     mysql_datadir: "/var/lib/mysql"
-    mysql_bin_path: "/usr/bin"
-    app_user: "appuser"
-    app_user_password: "APPuser"
+    mysql_bin_path: "/usr/sbin/mysqld"
 
   tasks:
     - name: Stop MySQL service if running
