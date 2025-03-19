@@ -42,7 +42,7 @@ pipeline {
         //                          installation: 'Ansible',
         //                          inventory: 'dev.inv',
         //                          playbook: 'Playbook/mysql2.yml'
-            }
-        }
+        //     }
+        // }
     }
 }
