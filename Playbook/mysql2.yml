@@ -32,11 +32,11 @@
 
     - name: Reset MySQL root password in safe mode
       ansible.builtin.shell: |
-        mysql -u root -e "UPDATE mysql.user SET authentication_string=PASSWORD('{{ mysql_root_password }}'), plugin='mysql_native_password' WHERE User='root';"
-        mysql -u root -e "FLUSH PRIVILEGES;"
+        mysql -u root -S /tmp/mysql.sock -e "UPDATE mysql.user SET authentication_string=PASSWORD('{{ mysql_final_password }}'), plugin='mysql_native_password' WHERE User='root';"
+        mysql -u root -S /tmp/mysql.sock -e "FLUSH PRIVILEGES;"
 
     - name: Stop MySQL safe mode
-      ansible.builtin.shell: "pkill -f mysqld"
+      ansible.builtin.shell: "sudo pkill -f mysqld"
 
     - name: Start MySQL normally
       ansible.builtin.service:
@@ -44,14 +44,14 @@
         state: started
         enabled: yes
 
-    - name: Wait for MySQL to fully start
-      ansible.builtin.wait_for:
-        path: "{{ mysql_socket }}"
-        timeout: 40
+    # - name: Wait for MySQL to fully start
+    #   ansible.builtin.wait_for:
+    #     path: "{{ mysql_socket }}"
+    #     timeout: 40
 
     - name: Alter root user with final password
       community.mysql.mysql_query:
         login_user: root
-        login_password: "{{ mysql_root_password }}"
+        login_password: "{{ mysql_final_password }}"
         query: "ALTER USER 'root'@'localhost' IDENTIFIED BY '{{ mysql_final_password }}';"
 
