@@ -17,6 +17,16 @@
         name: mysql-community-server
         state: present
 
+    # Initialize MySQL data directory
+    - name: Reinitialize MySQL and generate a new temporary password
+      ansible.builtin.shell: |
+        rm -rf /var/lib/mysql/*
+        mysqld --initialize --user=mysql
+      args:
+        creates: /var/lib/mysql/mysql
+      register: mysql_init
+      changed_when: true
+
     # Start MySQL service on RHEL 9
     - name: Start and enable MySQL service
       ansible.builtin.systemd:
