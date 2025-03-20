@@ -39,7 +39,7 @@
 
     - name: Reset MySQL root password in safe mode
       ansible.builtin.shell: |
-        mysql -u root -S /tmp/mysql.sock -e "UPDATE mysql.user SET authentication_string=PASSWORD('{{ mysql_final_password }}'), plugin='mysql_native_password' WHERE User='root';"
+        mysql -u root -S /tmp/mysql.sock -e "UPDATE mysql.user SET authentication_string=PASSWORD('{{ mysql_final_password }}'), plugin='caching_sha2_password' WHERE User='root';"
         mysql -u root -S /tmp/mysql.sock -e "FLUSH PRIVILEGES;"
 
     - name: Stop MySQL safe mode
