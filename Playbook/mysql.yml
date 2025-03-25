@@ -5,7 +5,7 @@
   vars:
     nexus_repo_url: "http://172.24.8.188:8081/repository/files/mysql84-community-release-el9-1.noarch.rpm"
     nexus_user: "admin"
-    nexus_password: "admin"
+    nexus_password: "2418"
   tasks:
 
     # Download MySQL 8.4 RPM from Nexus repository
