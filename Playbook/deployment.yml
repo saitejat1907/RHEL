@@ -3,11 +3,6 @@
   hosts: n1
   become: yes
   vars:
-    # jar_src: "/tmp/weblogic.jar"
-    # jar_dest: "/opt/app/weblogic.jar"
-    # jdk_tar: "/tmp/jdk-8u202-linux-x64.tar.gz"
-    # jdk_dest: "/usr/java/jdk1.8.0_202"
-    # create_domain_script: "/opt/app/create_domain.py"
     domain_path: "/opt/app/weblogic/user_projects/domains/mydomain"
     admin_user: "weblogic"
     admin_pass: "Web@1234"

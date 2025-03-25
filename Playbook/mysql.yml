@@ -1,9 +1,25 @@
 ---
 - name: Install and Configure MySQL 8.4 on RHEL 9 and Migrate from Solaris 11 MySQL 5.7
-  hosts: n1
+  hosts: n2
   become: yes
+  vars:
+    nexus_repo_url: "http://172.24.8.188:8081/repository/files/mysql84-community-release-el9-1.noarch.rpm"
+    nexus_user: "admin"
+    nexus_password: "admin"
   tasks:
-  
+
+    # Download MySQL 8.4 RPM from Nexus repository
+    - name: Download MySQL 8.4 repository file from Nexus
+      ansible.builtin.uri:
+        url: "{{ nexus_repo_url }}"
+        user: "{{ nexus_user }}"
+        password: "{{ nexus_password }}"
+        method: GET
+        force_basic_auth: yes
+        dest: /tmp/mysql84-community-release-el9-1.noarch.rpm
+      register: download_rpm
+      failed_when: download_rpm.status not in [200]
+
     # Install MySQL 8 repository on RHEL 9
     - name: Install MySQL 8.4 repository from local file
       ansible.builtin.dnf:
@@ -36,7 +52,7 @@
 
     # Get MySQL root password from the MySQL log
     - name: Get MySQL temporary root password
-      shell: "grep 'temporary password' /var/log/mysqld.log | awk '{print $NF}'"
+      shell: "grep -i 'temporary password' /var/log/mysqld.log | tail -n 1 | awk '{print $NF}'"
       register: mysql_root_password
       changed_when: false
       ignore_errors: yes
@@ -53,27 +69,3 @@
       ansible.builtin.systemd:
         name: mysqld
         state: restarted
-    
-# - name: Secure MySQL installation manually
-#   hosts: n1
-#   become: yes
-#   tasks:
-
-#     - name: Disallow root login remotely
-#       community.mysql.mysql_query:
-#         query: "DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1');"
-#         login_user: root
-#         login_password: Matilda@123
-
-#     - name: Remove test database
-#       community.mysql.mysql_db:
-#         name: test
-#         state: absent
-#         login_user: root
-#         login_password: Matilda@123
-
-#     - name: Flush privileges
-#       community.mysql.mysql_query:
-#         query: "FLUSH PRIVILEGES;"
-#         login_user: root
-#         login_password: Matilda@123

@@ -26,24 +26,24 @@ pipeline {
         //                          playbook: 'Playbook/weblogic.yml'
         //     }
         // }
-        stage("Execute WebLogic Deployment Playbook") {
-            steps {
-                ansiblePlaybook credentialsId: 'Ansible',
-                                 disableHostKeyChecking: true,
-                                 installation: 'Ansible',
-                                 inventory: 'dev.inv',
-                                 playbook: 'Playbook/deployment.yml'
-            }
-        }
-        // stage("Execute apache Playbook") {
+        // stage("Execute WebLogic Deployment Playbook") {
         //     steps {
         //         ansiblePlaybook credentialsId: 'Ansible',
         //                          disableHostKeyChecking: true,
         //                          installation: 'Ansible',
         //                          inventory: 'dev.inv',
-        //                          playbook: 'Playbook/mysql.yml'
+        //                          playbook: 'Playbook/deployment.yml'
         //     }
         // }
+        stage("Execute apache Playbook") {
+            steps {
+                ansiblePlaybook credentialsId: 'Ansible',
+                                 disableHostKeyChecking: true,
+                                 installation: 'Ansible',
+                                 inventory: 'dev.inv',
+                                 playbook: 'Playbook/mysql.yml'
+            }
+        }
         // stage("Execute apache Playbook") {
         //     steps {
         //         ansiblePlaybook credentialsId: 'Ansible',
