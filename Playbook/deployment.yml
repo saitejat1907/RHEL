@@ -11,6 +11,10 @@
     app_name: "LoginWebApp"
     admin_url: "t3://172.24.8.188:7001"
     deploy_script: "/opt/app/deploy_app.py"
+    nexus_user: "admin"
+    nexus_password: "2418"
+    war_repo_url: "http://172.24.8.188:8081/repository/files/LoginWebApp.war"
+    war_dest: "/tmp/LoginWebApp.war"
 
   tasks:
 
@@ -45,6 +49,18 @@
       become_user: app
       async: 45
       poll: 0
+
+    # Download LoginWebApp WAR file from Nexus repository
+    - name: Download LoginWebApp WAR file from Nexus
+      ansible.builtin.uri:
+        url: "{{ war_repo_url }}"
+        user: "{{ nexus_user }}"
+        password: "{{ nexus_password }}"
+        method: GET
+        force_basic_auth: yes
+        dest: "{{ war_dest }}"
+      register: download_war
+      failed_when: download_war.status not in [200]
 
     # Ensure correct ownership of WAR file before moving
     - name: Change ownership of WAR file to app:appgroup

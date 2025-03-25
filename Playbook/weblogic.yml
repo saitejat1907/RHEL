@@ -8,124 +8,140 @@
     jdk_tar: "/tmp/jdk-8u202-linux-x64.tar.gz"  # Path to the JDK tar file (after SCP)
     jdk_dest: "/usr/java/jdk1.8.0_202"  # Path where JDK will be installed
     create_domain_script: "/opt/app/create_domain.py"  # Path to the create_domain.py script
+    nexus_repo_url: "http://172.24.8.188:8081/repository/files/weblogic.jar"
+    nexus_user: "admin"
+    nexus_password: "2418"
+    weblogic_dest: "/tmp/weblogic.jar"
 
   tasks:
-    # # Create app group
-    # - name: Create app group
-    #   group:
-    #     name: appgroup
-    #     state: present
+    # Create app group
+    - name: Create app group
+      group:
+        name: appgroup
+        state: present
 
-    # # Create app user
-    # - name: Create app user
-    #   user:
-    #     name: app
-    #     group: appgroup
-    #     create_home: yes
-    #     shell: /bin/bash
-    #     state: present
+    # Create app user
+    - name: Create app user
+      user:
+        name: app
+        group: appgroup
+        create_home: yes
+        shell: /bin/bash
+        state: present
 
-    # # Create /opt/app directory
-    # - name: Create /opt/app directory
-    #   file:
-    #     path: /opt/app
-    #     state: directory
-    #     owner: app
-    #     group: appgroup
-    #     mode: '0755'
+    # Create /opt/app directory
+    - name: Create /opt/app directory
+      file:
+        path: /opt/app
+        state: directory
+        owner: app
+        group: appgroup
+        mode: '0755'
 
-    # # Move WebLogic JAR file to /opt/app/
-    # - name: Move WebLogic JAR file to /opt/app
-    #   command: mv {{ jar_src }} {{ jar_dest }}
-    #   args:
-    #     removes: "{{ jar_src }}"  # Removes the JAR file from /tmp after moving
-    #   become_user: app
-    #   ignore_errors: yes
+    # Download WebLogic JAR file from Nexus repository
+    - name: Download WebLogic JAR file from Nexus
+      ansible.builtin.uri:
+        url: "{{ nexus_repo_url }}"
+        user: "{{ nexus_user }}"
+        password: "{{ nexus_password }}"
+        method: GET
+        force_basic_auth: yes
+        dest: "{{ weblogic_dest }}"
+      register: download_weblogic
+      failed_when: download_weblogic.status not in [200]
 
-    # # Set correct ownership and permissions for WebLogic JAR
-    # - name: Set permissions for WebLogic JAR
-    #   file:
-    #     path: "{{ jar_dest }}"
-    #     owner: app
-    #     group: appgroup
-    #     mode: '0755'
+    # Move WebLogic JAR file to /opt/app/
+    - name: Move WebLogic JAR file to /opt/app
+      command: mv {{ jar_src }} {{ jar_dest }}
+      args:
+        removes: "{{ jar_src }}"  # Removes the JAR file from /tmp after moving
+      become_user: app
+      ignore_errors: yes
 
-    # # Check if Oracle JDK is installed
-    # - name: Check if Oracle JDK is installed
-    #   stat:
-    #     path: "{{ jdk_dest }}"
-    #   register: jdk_stat
+    # Set correct ownership and permissions for WebLogic JAR
+    - name: Set permissions for WebLogic JAR
+      file:
+        path: "{{ jar_dest }}"
+        owner: app
+        group: appgroup
+        mode: '0755'
 
-    # # Ensure /usr/java/ directory exists
-    # - name: Ensure /usr/java/ directory exists
-    #   file:
-    #     path: /usr/java
-    #     state: directory
-    #     mode: '0755'
+    # Check if Oracle JDK is installed
+    - name: Check if Oracle JDK is installed
+      stat:
+        path: "{{ jdk_dest }}"
+      register: jdk_stat
 
-    # # Extract Oracle JDK 8 if not already extracted
-    # - name: Extract Oracle JDK 8
-    #   unarchive:
-    #     src: "{{ jdk_tar }}"
-    #     dest: /usr/java/
-    #     remote_src: yes
-    #   when: jdk_stat.stat.exists == false
+    # Ensure /usr/java/ directory exists
+    - name: Ensure /usr/java/ directory exists
+      file:
+        path: /usr/java
+        state: directory
+        mode: '0755'
 
-    # # Set JAVA_HOME to Oracle JDK
-    # - name: Set JAVA_HOME to Oracle JDK
-    #   lineinfile:
-    #     path: /etc/profile
-    #     line: 'export JAVA_HOME=/usr/java/jdk1.8.0_202'
-    #     create: yes
-    #   when: jdk_stat.stat.exists == false
+    # Extract Oracle JDK 8 if not already extracted
+    - name: Extract Oracle JDK 8
+      unarchive:
+        src: "{{ jdk_tar }}"
+        dest: /usr/java/
+        remote_src: yes
+      when: jdk_stat.stat.exists == false
 
-    # # Add Oracle JDK to PATH
-    # - name: Add Oracle JDK to PATH
-    #   lineinfile:
-    #     path: /etc/profile
-    #     line: 'export PATH=$JAVA_HOME/bin:$PATH'
-    #     create: yes
-    #   when: jdk_stat.stat.exists == false
+    # Set JAVA_HOME to Oracle JDK
+    - name: Set JAVA_HOME to Oracle JDK
+      lineinfile:
+        path: /etc/profile
+        line: 'export JAVA_HOME=/usr/java/jdk1.8.0_202'
+        create: yes
+      when: jdk_stat.stat.exists == false
 
-    # # Source profile to apply changes
-    # - name: Source profile to apply changes
-    #   shell: source /etc/profile
-    #   when: jdk_stat.stat.exists == false
+    # Add Oracle JDK to PATH
+    - name: Add Oracle JDK to PATH
+      lineinfile:
+        path: /etc/profile
+        line: 'export PATH=$JAVA_HOME/bin:$PATH'
+        create: yes
+      when: jdk_stat.stat.exists == false
 
-    # # Create /var/opt/oracle directory if it does not exist
-    # - name: Create /var/opt/oracle directory
-    #   file:
-    #     path: /var/opt/oracle
-    #     state: directory
-    #     owner: root
-    #     group: root
-    #     mode: '0755'
+    # Source profile to apply changes
+    - name: Source profile to apply changes
+      shell: source /etc/profile
+      when: jdk_stat.stat.exists == false
 
-    # # Create response.rsp file
-    # - name: Create response.rsp file
-    #   copy:
-    #     content: |
-    #       [ENGINE]
-    #       Response File Version=1.0.0.0.0
+    # Create /var/opt/oracle directory if it does not exist
+    - name: Create /var/opt/oracle directory
+      file:
+        path: /var/opt/oracle
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+
+    # Create response.rsp file
+    - name: Create response.rsp file
+      copy:
+        content: |
+          [ENGINE]
+          Response File Version=1.0.0.0.0
           
-    #       [GENERIC]
-    #       ORACLE_HOME=/opt/app/weblogic
-    #       INSTALL_TYPE=WebLogic Server
-    #     dest: /opt/app/response.rsp
-    #     owner: app
-    #     group: appgroup
-    #     mode: '0644'
+          [GENERIC]
+          ORACLE_HOME=/opt/app/weblogic
+          INSTALL_TYPE=WebLogic Server
+        dest: /opt/app/response.rsp
+        owner: app
+        group: appgroup
+        mode: '0644'
 
-    # # Create oraInst.loc file
-    # - name: Create oraInst.loc file
-    #   copy:
-    #     content: |
-    #       inst_group=appgroup
-    #       inventory_loc=/opt/app/oraInventory
-    #     dest: /var/opt/oracle/oraInst.loc
-    #     owner: root
-    #     group: root
-    #     mode: '0644'
+    # Create oraInst.loc file
+    - name: Create oraInst.loc file
+      copy:
+        content: |
+          inst_group=appgroup
+          inventory_loc=/opt/app/oraInventory
+        dest: /var/opt/oracle/oraInst.loc
+        owner: root
+        group: root
+        mode: '0644'
 
     # Create create_domain.py script for WebLogic domain
     - name: Create create_domain.py script for WebLogic domain
@@ -158,15 +174,15 @@
         group: appgroup
         mode: '0755'
 
-    # # Run WebLogic installer
-    # - name: Run WebLogic installer
-    #   command: java -jar {{ jar_dest }} -silent -responseFile /opt/app/response.rsp -invPtrLoc /var/opt/oracle/oraInst.loc
-    #   environment:
-    #     JAVA_HOME: "/usr/java/jdk1.8.0_202"
-    #     PATH: "/usr/java/jdk1.8.0_202/bin:{{ ansible_env.PATH }}"
-    #   become_user: app
-    #   register: weblogic_install
-    #   ignore_errors: yes
+    # Run WebLogic installer
+    - name: Run WebLogic installer
+      command: java -jar {{ jar_dest }} -silent -responseFile /opt/app/response.rsp -invPtrLoc /var/opt/oracle/oraInst.loc
+      environment:
+        JAVA_HOME: "/usr/java/jdk1.8.0_202"
+        PATH: "/usr/java/jdk1.8.0_202/bin:{{ ansible_env.PATH }}"
+      become_user: app
+      register: weblogic_install
+      ignore_errors: yes
 
     # Configure the WebLogic domain using WLST
     - name: Create WebLogic domain
@@ -178,12 +194,12 @@
       register: create_domain
       ignore_errors: yes
 
-    # Start WebLogic server
-    - name: Start WebLogic server
-      command: "/opt/app/weblogic/user_projects/domains/mydomain/bin/startWebLogic.sh"
-      become_user: app
-      register: start_weblogic
-      ignore_errors: yes
+    # # Start WebLogic server
+    # - name: Start WebLogic server
+    #   command: "/opt/app/weblogic/user_projects/domains/mydomain/bin/startWebLogic.sh"
+    #   become_user: app
+    #   register: start_weblogic
+    #   ignore_errors: yes
 
     # Show WebLogic installation output
     - name: Show WebLogic installation output
@@ -195,7 +211,7 @@
       debug:
         msg: "{{ create_domain.stdout }}"
 
-    # Show WebLogic start output
-    - name: Show WebLogic start output
-      debug:
-        msg: "{{ start_weblogic.stdout }}"
+    # # Show WebLogic start output
+    # - name: Show WebLogic start output
+    #   debug:
+    #     msg: "{{ start_weblogic.stdout }}"
