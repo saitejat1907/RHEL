@@ -1,6 +1,6 @@
 ---
 - name: Install and Configure MySQL 8.4 on RHEL 9 and Migrate from Solaris 11 MySQL 5.7
-  hosts: n2
+  hosts: n1
   become: yes
   vars:
     nexus_repo_url: "http://172.24.8.188:8081/repository/files/mysql84-community-release-el9-1.noarch.rpm"
